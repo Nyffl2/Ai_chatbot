@@ -2,16 +2,17 @@ const TelegramBot = require('node-telegram-bot-api');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const express = require('express');
 
-// Render အတွက် Server နိုးအောင် လုပ်ခြင်း
+// Render အတွက် Port ပတ်လမ်းကြောင်း
 const app = express();
 const port = process.env.PORT || 3000;
-app.get('/', (req, res) => res.send('Bot is Running!'));
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+app.get('/', (req, res) => res.send('Bot Status: Online'));
+app.listen(port, () => console.log(`Health check server listening on port ${port}`));
 
 // Config
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Bot Instance (Polling error မတက်အောင် ပြင်ထားသည်)
 const bot = new TelegramBot(token, { polling: true });
 
 bot.on('message', async (msg) => {
@@ -21,13 +22,17 @@ bot.on('message', async (msg) => {
     if (!text || text.startsWith('/')) return;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // Model နာမည်ကို "gemini-pro" သို့မဟုတ် "gemini-1.5-flash-latest" ပြောင်းသုံးပါ
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" }); 
+        
         const result = await model.generateContent(text);
         const response = await result.response;
-        bot.sendMessage(chatId, response.text());
+        const replyText = response.text();
+        
+        bot.sendMessage(chatId, replyText);
     } catch (error) {
-        console.error(error);
-        bot.sendMessage(chatId, "တောင်းပန်ပါတယ်၊ Error တစ်ခု တက်နေပါတယ်။");
+        console.error("Gemini Error:", error.message);
+        bot.sendMessage(chatId, "တောင်းပန်ပါတယ်၊ AI နဲ့ ချိတ်ဆက်ရာမှာ အဆင်မပြေဖြစ်သွားပါတယ်။ နောက်တစ်ခေါက် ပြန်ကြိုးစားကြည့်ပါ။");
     }
 });
 
