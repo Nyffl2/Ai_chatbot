@@ -4,8 +4,8 @@ const express = require('express');
 
 const app = express();
 const port = process.env.PORT || 10000;
-app.get('/', (req, res) => res.send('Bot is Online!'));
-app.listen(port, () => console.log(`Health check server listening on port ${port}`));
+app.get('/', (req, res) => res.send('Bot Status: Online'));
+app.listen(port, () => console.log(`Server listening on port ${port}`));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
@@ -17,15 +17,13 @@ bot.on('message', async (msg) => {
     if (!text || text.startsWith('/')) return;
 
     try {
-        // gemini-1.5-flash ကို သုံးခြင်းက အမှန်ကန်ဆုံးဖြစ်ပါတယ်
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
-        
         const result = await model.generateContent(text);
         const response = await result.response;
         bot.sendMessage(chatId, response.text());
     } catch (error) {
         console.error("Gemini Error:", error.message);
-        bot.sendMessage(chatId, "AI နဲ့ ချိတ်ဆက်ရာမှာ အဆင်မပြေဖြစ်သွားပါတယ်။");
+        bot.sendMessage(chatId, "AI နဲ့ ချိတ်ဆက်ရာမှာ အဆင်မပြေဖြစ်သွားပါတယ်။ နောက်တစ်ခေါက် ပြန်စမ်းကြည့်ပါ။");
     }
 });
 
