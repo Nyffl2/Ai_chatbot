@@ -2,13 +2,11 @@ const TelegramBot = require('node-telegram-bot-api');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const express = require('express');
 
-// Render အတွက် Server နိုးထားရန်
 const app = express();
 const port = process.env.PORT || 10000;
 app.get('/', (req, res) => res.send('Bot is Online!'));
 app.listen(port, () => console.log(`Server listening on port ${port}`));
 
-// API Config
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
@@ -19,19 +17,16 @@ bot.on('message', async (msg) => {
     if (!text || text.startsWith('/')) return;
 
     try {
-        // Model နာမည်အမှန် - gemini-1.5-flash
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
-        
         const result = await model.generateContent(text);
         const response = await result.response;
         bot.sendMessage(chatId, response.text());
     } catch (error) {
-        console.error("Error Detail:", error.message);
+        console.error("Gemini Error:", error.message);
         bot.sendMessage(chatId, "ခဏလေးနော်၊ AI နဲ့ ချိတ်ဆက်ရာမှာ အဆင်မပြေဖြစ်သွားလို့ပါ။");
     }
 });
 
-// Polling Conflict များအတွက်
 bot.on('polling_error', (error) => {
     if (error.code !== 'ETELEGRAM') console.error(error.message);
 });
